@@ -1,0 +1,882 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style><title>Dormween</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,700;1,500;1,700&family=JetBrains+Mono:wght@500&family=Onest:wght@400;500;700&family=Rubik+Wet+Paint&display=swap">
+</head><body>
+<style>
+/* Layout concept: one long haunted corridor. A full-screen hero (moon, bat swarm flying at the viewer, a poem that surfaces line by line), then a door-grid of four tiles leading to four rooms stacked in reading order: info, rules, vote, costumes. Single dark look on purpose. */
+:root{
+  color-scheme: dark;
+  --bg:#0c0612;
+  --panel:#160b24;
+  --panel-2:#211234;
+  --ink:#f0e8d6;
+  --ink-dim:#bbaecb;
+  --line:rgba(240,232,214,.14);
+  --orange:#ff7a1a;
+  --orange-soft:#ffb066;
+  --violet:#8a5cf5;
+  --slime:#9ee06b;
+  --blood:#e0385a;
+  --f-display:'Rubik Wet Paint','Impact','Arial Black',sans-serif;
+  --f-serif:'Cormorant Garamond',Georgia,'Times New Roman',serif;
+  --f-body:'Onest','Segoe UI',system-ui,-apple-system,sans-serif;
+  --f-mono:'JetBrains Mono',ui-monospace,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 1rem/1.6 var(--f-body)}
+h1,h2,h3,p,ul,ol,figure,fieldset{margin:0}
+a{color:var(--orange-soft)}
+:focus-visible{outline:2px solid var(--orange-soft);outline-offset:3px}
+.page{position:relative;overflow-x:clip}
+.wrap{width:100%;max-width:1040px;margin-inline:auto;padding-inline:16px}
+
+/* ---------- ambient drifting emoji ---------- */
+.drift{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.drift i{position:absolute;left:var(--x,10%);top:105%;font-style:normal;font-size:var(--s,28px);opacity:.17;animation:drift var(--t,50s) linear infinite;animation-delay:var(--dl,0s)}
+@keyframes drift{to{transform:translate(var(--dx,40px),-125vh) rotate(var(--r,20deg))}}
+
+/* ---------- top nav (appears after the hero) ---------- */
+.nav{position:fixed;left:0;right:0;top:0;z-index:20;padding:calc(8px + env(safe-area-inset-top,0px)) 12px 8px;background:rgba(12,6,18,.86);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);transform:translateY(-110%);transition:transform .35s ease}
+.nav.on{transform:none}
+.nav ul{display:flex;gap:6px;list-style:none;margin:0;padding:0;justify-content:center;overflow-x:auto;scrollbar-width:none}
+.nav a{display:block;padding:.4rem .8rem;border-radius:999px;color:var(--ink-dim);text-decoration:none;font-size:.9rem;white-space:nowrap}
+.nav a[aria-current="true"]{background:rgba(255,122,26,.18);color:var(--orange-soft)}
+
+/* ---------- hero ---------- */
+.hero{position:relative;z-index:1;isolation:isolate;min-height:100vh;min-height:100svh;display:flex;flex-direction:column;justify-content:center;padding:84px 16px 104px;overflow:hidden;
+  background:radial-gradient(120% 70% at 75% 0%,#3b1963 0%,#1a0b2e 42%,var(--bg) 82%)}
+.hero::after{content:"";position:absolute;left:0;right:0;bottom:0;height:26%;background:linear-gradient(to bottom,transparent,var(--bg));z-index:1;pointer-events:none}
+.stars{position:absolute;inset:0;z-index:0;opacity:.8;
+  background-image:
+   radial-gradient(1.6px 1.6px at 12% 18%,#fff 50%,transparent 51%),
+   radial-gradient(1.2px 1.2px at 27% 8%,#fff 50%,transparent 51%),
+   radial-gradient(1.4px 1.4px at 41% 26%,#fff 50%,transparent 51%),
+   radial-gradient(1.2px 1.2px at 58% 12%,#fff 50%,transparent 51%),
+   radial-gradient(1.6px 1.6px at 66% 34%,#fff 50%,transparent 51%),
+   radial-gradient(1.2px 1.2px at 8% 52%,#fff 50%,transparent 51%),
+   radial-gradient(1.4px 1.4px at 90% 58%,#fff 50%,transparent 51%),
+   radial-gradient(1.2px 1.2px at 34% 66%,#fff 50%,transparent 51%),
+   radial-gradient(1.4px 1.4px at 76% 78%,#fff 50%,transparent 51%),
+   radial-gradient(1.2px 1.2px at 18% 84%,#fff 50%,transparent 51%);
+  animation:twinkle 5s ease-in-out infinite alternate}
+@keyframes twinkle{from{opacity:.45}to{opacity:.9}}
+.moon{position:absolute;z-index:0;top:3%;right:-5%;width:min(34vw,260px);aspect-ratio:1;border-radius:50%;
+  background:
+   radial-gradient(circle at 30% 28%,rgba(120,70,20,.3) 0 7%,transparent 8%),
+   radial-gradient(circle at 62% 58%,rgba(120,70,20,.24) 0 10%,transparent 11%),
+   radial-gradient(circle at 44% 80%,rgba(120,70,20,.22) 0 5%,transparent 6%),
+   radial-gradient(circle at 38% 34%,#ffe7b8 0%,#ffc27a 50%,#e8873a 100%);
+  box-shadow:0 0 80px 24px rgba(255,150,70,.3);opacity:.9}
+@media(max-width:600px){.moon{top:12px;right:14px;width:68px;box-shadow:0 0 40px 10px rgba(255,150,70,.3)}}
+.hero canvas{position:absolute;inset:0;width:100%;height:100%;z-index:1;pointer-events:none}
+.hero__in{position:relative;z-index:2;width:100%;max-width:720px;margin-inline:auto;text-align:center}
+.eyebrow{font:500 .78rem/1.4 var(--f-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--orange-soft)}
+.eyebrow .sh{display:none}
+@media(max-width:600px){.eyebrow{font-size:.74rem;letter-spacing:.06em}.eyebrow .lg{display:none}.eyebrow .sh{display:inline}}
+.title{font:400 clamp(3.5rem,16vw,8.4rem)/.95 var(--f-display);color:var(--orange);margin:.18em 0 .12em;letter-spacing:.01em;
+  text-shadow:0 0 30px rgba(255,122,26,.5),0 4px 0 #3a1200,0 0 6px #000}
+.sub{font:italic 500 clamp(1.2rem,4.6vw,1.75rem)/1.2 var(--f-serif);color:var(--orange-soft);text-shadow:0 2px 12px #000}
+.poem{margin:1.5rem auto 0;font:italic 700 clamp(1.35rem,5.6vw,1.8rem)/1.38 var(--f-serif);letter-spacing:.02em;color:#fff1da;text-shadow:0 2px 14px rgba(12,6,18,1),0 0 4px rgba(12,6,18,1),0 0 26px rgba(138,92,245,.55)}
+.poem .st{margin:0 0 .95rem}
+@media(min-width:900px){.hero__in{max-width:920px}.poem{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:3.5rem}}
+.ln{display:block;opacity:0;animation:rise .9s cubic-bezier(.2,.7,.2,1) forwards;animation-delay:var(--d,0s)}
+@keyframes rise{from{opacity:0;transform:translateY(10px);filter:blur(5px)}to{opacity:1;transform:none;filter:blur(0)}}
+.cta-line{margin-top:.4rem;font:500 .85rem/1.4 var(--f-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--slime);opacity:0;animation:rise .9s ease forwards;animation-delay:var(--d,0s)}
+.next{margin-top:1.3rem;display:inline-flex;align-items:center;gap:.6rem;min-height:48px;padding:.7rem 1.5rem;border-radius:999px;border:0;background:var(--orange);color:#1a0900;font:700 1.02rem var(--f-body);cursor:pointer;opacity:0;animation:rise .8s ease forwards;animation-delay:3.4s;box-shadow:0 10px 36px -10px rgba(255,122,26,.8)}
+.next svg{width:20px;height:20px;animation:bob 1.6s ease-in-out infinite}
+@keyframes bob{50%{transform:translateY(4px)}}
+
+/* ---------- sections ---------- */
+section{position:relative;z-index:1;padding-block:56px;scroll-margin-top:52px}
+.web{position:absolute;top:0;left:0;width:min(30vw,130px);height:auto;color:rgba(240,232,214,.2);pointer-events:none}
+.web--r{left:auto;right:0;transform:scaleX(-1)}
+.h2{display:flex;align-items:center;gap:.7rem;font:italic 700 clamp(2rem,7.4vw,3.2rem)/1.05 var(--f-serif);text-wrap:balance;margin-bottom:.7rem}
+.h2 svg{width:46px;height:46px;flex:none}
+.h3{font:700 1.5rem/1.15 var(--f-serif);margin:2.2rem 0 .9rem}
+.lead{color:var(--ink-dim);font:italic 500 1.3rem/1.45 var(--f-serif);letter-spacing:.01em;max-width:62ch;margin-bottom:1.6rem}
+.cards{display:grid;gap:14px;grid-template-columns:minmax(0,1fr)}
+@media(min-width:720px){.cards{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px;min-width:0}
+.card h3{display:flex;align-items:center;gap:.55rem;font:700 1.4rem/1.15 var(--f-serif);margin-bottom:.4rem}
+.card p{color:var(--ink-dim)}
+.card--warn{background:rgba(224,56,90,.1);border-color:rgba(224,56,90,.45)}
+.card--ghost{background:transparent;border-style:dashed}
+.ico{width:34px;height:20px;flex:none}
+
+/* hub */
+.hub{padding-top:36px}
+.hub__t{font:italic 700 clamp(1.8rem,6.4vw,2.6rem)/1.1 var(--f-serif);margin-bottom:.4rem}
+.hub__s{color:var(--ink-dim);font:italic 500 1.2rem/1.4 var(--f-serif);margin-bottom:1.4rem}
+.tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+@media(min-width:760px){.tiles{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.tile{display:flex;flex-direction:column;gap:.45rem;min-height:196px;padding:18px 14px;border-radius:18px;border:1px solid var(--line);background:linear-gradient(160deg,var(--panel-2),var(--panel));color:var(--ink);text-decoration:none;transition:transform .25s ease,box-shadow .25s ease,border-color .25s ease}
+.tile svg{width:68px;height:68px}
+.tile h3{font:700 1.45rem/1.1 var(--f-serif);margin-top:auto}
+.tile p{color:var(--ink-dim);font-size:.9rem;line-height:1.4}
+.tile:hover,.tile:focus-visible{transform:translateY(-4px) rotate(-.7deg);border-color:var(--orange);box-shadow:0 14px 40px -14px rgba(255,122,26,.55)}
+
+/* timeline */
+.tl{list-style:none;margin:0 0 0 7px;padding:0;border-left:2px solid var(--line)}
+.tl li{position:relative;padding:0 0 20px 22px;color:var(--ink-dim)}
+.tl li::before{content:"";position:absolute;left:-8px;top:.4em;width:14px;height:14px;border-radius:50%;background:var(--orange);box-shadow:0 0 0 4px rgba(255,122,26,.18)}
+.tl li.end::before{background:var(--blood);box-shadow:0 0 0 4px rgba(224,56,90,.22)}
+.tl time{display:block;font:500 .92rem/1.4 var(--f-mono);color:var(--orange-soft)}
+.tl li.end time{color:var(--blood)}
+.note{margin-top:2rem;padding:18px;border-radius:14px;border:1px dashed rgba(158,224,107,.55);background:rgba(158,224,107,.06)}
+.note h3{font:italic 700 1.45rem/1.2 var(--f-serif);color:var(--slime);margin-bottom:.35rem}
+.note p{color:var(--ink)}
+
+/* vote */
+.how{margin:0 0 1.6rem;padding:18px 18px 18px 36px;border-radius:14px;background:var(--panel-2);border:1px solid var(--line);display:grid;gap:.6rem}
+.how li::marker{color:var(--orange)}
+.roles{border:0;padding:0;margin:0 0 1.2rem;display:grid;gap:10px;min-width:0}
+.roles legend{padding:0;margin-bottom:.6rem;font:700 1.2rem/1.2 var(--f-serif)}
+.role{display:block;position:relative;padding:14px 16px;border:1px solid var(--line);border-radius:12px;background:var(--panel);cursor:pointer;transition:border-color .2s,background .2s}
+.role input{position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:pointer}
+.role__t{display:block;font-weight:700}
+.role__t::before{content:"";display:inline-block;width:.85em;height:.85em;margin-right:.55em;border:2px solid var(--ink-dim);border-radius:50%;vertical-align:-.1em}
+.role__d{display:block;margin-top:.2rem;color:var(--ink-dim);font-size:.92rem;line-height:1.45}
+.role.on{border-color:var(--orange);background:linear-gradient(160deg,rgba(255,122,26,.17),var(--panel))}
+.role.on .role__t::before{background:var(--orange);border-color:var(--orange);box-shadow:inset 0 0 0 2px var(--panel)}
+.role:focus-within{outline:2px solid var(--orange-soft);outline-offset:2px}
+.grid2{display:grid;gap:12px;grid-template-columns:minmax(0,1fr)}
+@media(min-width:560px){.grid2{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.field{display:grid;gap:.35rem;margin-bottom:12px;min-width:0}
+.field label,.field .lbl{font-weight:500;font-size:.95rem}
+.opt{color:var(--ink-dim);font-weight:400}
+input[type=text],select,textarea{width:100%;min-height:46px;padding:.65rem .8rem;border-radius:10px;border:1px solid var(--line);background:var(--panel-2);color:var(--ink);font:inherit}
+textarea{resize:vertical}
+input::placeholder,textarea::placeholder{color:rgba(187,174,203,.6)}
+.timerow{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap}
+.timerow select{width:auto;min-width:96px}
+.hint{color:var(--ink-dim);font:italic 500 1.05rem/1.4 var(--f-serif)}
+.err{margin:0 0 12px;padding:.7rem .9rem;border-radius:10px;background:rgba(224,56,90,.14);border:1px solid rgba(224,56,90,.5);color:#ffd5dc}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;min-height:48px;padding:.7rem 1.4rem;border-radius:999px;border:1px solid var(--orange);background:var(--orange);color:#1a0900;font:700 1rem var(--f-body);cursor:pointer;text-decoration:none}
+.btn--ghost{background:transparent;color:var(--ink);border-color:var(--line)}
+.btn:hover{filter:brightness(1.08)}
+.btn--big{min-height:56px;padding:.9rem 1.8rem;font-size:1.08rem;box-shadow:0 12px 40px -12px rgba(255,122,26,.8)}
+.vote-cta{margin-top:1.8rem;display:grid;gap:.7rem;justify-items:start}
+.out{margin-top:1.6rem;padding:18px;border-radius:14px;background:var(--panel-2);border:1px solid rgba(158,224,107,.5)}
+.out h3{font:700 1.4rem/1.2 var(--f-serif);margin:0 0 .4rem;color:var(--slime)}
+.out p{color:var(--ink-dim)}
+.msg{margin:.9rem 0;padding:14px;border-radius:10px;background:var(--bg);border:1px solid var(--line);color:var(--ink);font:500 .88rem/1.6 var(--f-mono);white-space:pre-wrap;overflow-wrap:anywhere}
+.actions{display:flex;flex-wrap:wrap;gap:10px}
+
+/* costumes */
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:1rem}
+.chip{min-height:40px;padding:.4rem .95rem;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--ink);font:500 .9rem var(--f-body);cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--orange);border-color:var(--orange);color:#1a0900}
+.pickrow{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-bottom:1.2rem}
+.pick{color:var(--orange-soft);font-weight:500}
+.cos{display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(min(100%,230px),1fr))}
+.cos .card{display:flex;flex-direction:column;gap:.3rem;transition:box-shadow .3s,border-color .3s}
+.cos .hd{display:flex;align-items:center;gap:.65rem}
+.cos .em{font-size:1.9rem;line-height:1}
+.cos h3{font:700 1.3rem/1.15 var(--f-serif)}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:auto;padding-top:.5rem}
+.tags span{font:500 .68rem/1 var(--f-mono);letter-spacing:.06em;text-transform:uppercase;padding:.3rem .5rem;border-radius:6px;background:rgba(138,92,245,.18);color:#d5c2ff}
+.cos .card.hit{border-color:var(--orange);box-shadow:0 0 0 4px rgba(255,122,26,.25),0 12px 40px -12px rgba(255,122,26,.6)}
+
+/* footer + sound */
+.foot{position:relative;z-index:1;padding:40px 16px 110px;text-align:center;color:var(--ink-dim);border-top:1px solid var(--line)}
+.foot svg{width:64px;height:32px;margin-bottom:.6rem}
+.foot b{display:block;color:var(--ink);font:700 1.3rem var(--f-serif);margin-bottom:.2rem}
+.snd{position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:30;display:flex;align-items:center;gap:.55rem;height:48px;min-width:48px;padding:0 13px;border-radius:999px;border:1px solid rgba(255,122,26,.55);background:rgba(22,11,36,.92);color:var(--ink);font:500 .9rem var(--f-body);cursor:pointer;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);box-shadow:0 8px 30px -8px rgba(0,0,0,.8)}
+.snd svg{width:22px;height:22px;flex:none}
+.snd .t{display:none;padding-right:4px}
+.snd[data-s="idle"] .t{display:inline}
+.snd[data-s="idle"]{animation:pulse 2.2s ease-in-out infinite}
+.snd .w{display:none}
+.snd[data-s="on"] .w{display:inline}
+.snd[data-s="on"] .x{display:none}
+@keyframes pulse{50%{box-shadow:0 0 0 8px rgba(255,122,26,.18),0 8px 30px -8px rgba(0,0,0,.8)}}
+
+@media(prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  .ln,.cta-line,.next{animation:none;opacity:1;transform:none;filter:none}
+  .drift,.stars,.next svg,.snd{animation:none}
+  .drift{display:none}
+  .tile,.nav{transition:none}
+}
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <symbol id="i-pumpkin" viewBox="0 0 64 64">
+      <path d="M32 17c-1-5 1-9 6-11" fill="none" stroke="#7bc74a" stroke-width="4" stroke-linecap="round"/>
+      <path d="M32 18c-5-3-12-3-18 1-6 5-9 13-7 21 2 8 10 14 25 14s23-6 25-14c2-8-1-16-7-21-6-4-13-4-18-1z" fill="#ff7a1a"/>
+      <path d="M32 18c-6 5-9 13-9 22s3 15 9 15" fill="none" stroke="#c9540a" stroke-width="2" stroke-linecap="round"/>
+      <path d="M32 18c6 5 9 13 9 22s-3 15-9 15" fill="none" stroke="#c9540a" stroke-width="2" stroke-linecap="round"/>
+      <path d="M18 36l6-9 5 9zM46 36l-6-9-5 9z" fill="#ffe29a"/>
+      <path d="M20 44l5 5 4-4 3 5 3-5 4 4 5-5c-3 9-21 9-24 0z" fill="#ffe29a"/>
+    </symbol>
+    <symbol id="i-ghost" viewBox="0 0 64 64">
+      <path d="M12 56V28C12 15 21 8 32 8s20 7 20 20v28l-6-5-7 5-7-5-7 5-7-5z" fill="#f1ead6"/>
+      <ellipse cx="25" cy="29" rx="4" ry="5.5" fill="#1b1030"/>
+      <ellipse cx="39" cy="29" rx="4" ry="5.5" fill="#1b1030"/>
+      <ellipse cx="32" cy="41" rx="4" ry="5" fill="#1b1030"/>
+      <ellipse cx="20" cy="37" rx="3.4" ry="2" fill="#ffb3c4" opacity=".7"/>
+      <ellipse cx="44" cy="37" rx="3.4" ry="2" fill="#ffb3c4" opacity=".7"/>
+    </symbol>
+    <symbol id="i-bat" viewBox="0 0 64 64">
+      <g fill="#1d0f33" stroke="#a97dff" stroke-width="1.6" stroke-linejoin="round">
+        <path d="M33 27Q40 14 62 18Q57 24 57 34Q51 28 47 35Q42 30 38 40Q36 36 33 42Z"/>
+        <path d="M31 27Q24 14 2 18Q7 24 7 34Q13 28 17 35Q22 30 26 40Q28 36 31 42Z"/>
+        <ellipse cx="32" cy="35" rx="5" ry="10"/>
+        <circle cx="32" cy="23" r="6"/>
+        <path d="M27.5 20L28.5 10L32 18ZM36.5 20L35.5 10L32 18Z"/>
+      </g>
+      <circle cx="30" cy="23" r="1.3" fill="#ff8a2b"/>
+      <circle cx="34" cy="23" r="1.3" fill="#ff8a2b"/>
+    </symbol>
+    <symbol id="i-hat" viewBox="0 0 64 64">
+      <g stroke="#a97dff" stroke-width="1.6" stroke-linejoin="round">
+        <path d="M30 6Q38 4 40 12L44 44H20L28 12Q29 8 30 6Z" fill="#251340"/>
+        <ellipse cx="32" cy="46" rx="28" ry="8" fill="#251340"/>
+        <path d="M23 36Q32 40 42 36L43.5 43Q32 47 20.5 43Z" fill="#ff7a1a" stroke="none"/>
+        <rect x="29" y="37" width="6" height="7" rx="1" fill="#ffe29a" stroke="none"/>
+      </g>
+    </symbol>
+    <symbol id="i-candy" viewBox="0 0 64 32">
+      <path d="M2 6L16 16L2 26ZM62 6L48 16L62 26Z" fill="#ff4f8b"/>
+      <rect x="14" y="5" width="36" height="22" rx="11" fill="#ff7a1a"/>
+      <path d="M30 5L27 27M37 5L34 27M44 5L41 27" stroke="#ffe29a" stroke-width="3" opacity=".55"/>
+    </symbol>
+  </defs>
+</svg>
+
+<div class="page">
+  <div class="drift" aria-hidden="true">
+    <i style="--x:8%;--s:30px;--t:46s;--dl:-8s;--dx:60px;--r:25deg">🦇</i>
+    <i style="--x:28%;--s:26px;--t:58s;--dl:-30s;--dx:-40px;--r:-15deg">🎃</i>
+    <i style="--x:50%;--s:34px;--t:52s;--dl:-18s;--dx:50px;--r:12deg">👻</i>
+    <i style="--x:70%;--s:24px;--t:64s;--dl:-44s;--dx:-60px;--r:-20deg">🍬</i>
+    <i style="--x:88%;--s:30px;--t:48s;--dl:-2s;--dx:-30px;--r:18deg">🕸️</i>
+    <i style="--x:40%;--s:22px;--t:70s;--dl:-55s;--dx:40px;--r:30deg">🦇</i>
+  </div>
+
+  <nav class="nav" id="nav" aria-label="Розділи сайту">
+    <ul>
+      <li><a href="#info">Інфо</a></li>
+      <li><a href="#rules">Правила</a></li>
+      <li><a href="#vote">Голосування</a></li>
+      <li><a href="#costumes">Костюми</a></li>
+    </ul>
+  </nav>
+
+  <header class="hero" id="top">
+    <div class="stars" aria-hidden="true"></div>
+    <div class="moon" aria-hidden="true"></div>
+    <canvas id="bats" aria-hidden="true"></canvas>
+    <div class="hero__in">
+      <p class="eyebrow"><span class="lg">Гуртожиток №10 · ніч з 31 жовтня на 1 листопада</span><span class="sh">Гуртожиток №10 · ніч з 31.10 на 01.11</span></p>
+      <h1 class="title">Dormween</h1>
+      <p class="sub">Найстрашніший захід, якого тут ще не було</p>
+      <div class="poem">
+        <p class="st">
+          <span class="ln">З тридцять першого на перше ніч не проста,</span>
+          <span class="ln">В ній кожна тінь, повір, неспроста.</span>
+          <span class="ln">У гуртожитку №10 раптом темно,</span>
+          <span class="ln">І хтось ходить по кімнатах таємно…</span>
+        </p>
+        <p class="st">
+          <span class="ln">Вбери костюм, страшний чи смішний,</span>
+          <span class="ln">Постукай до сусідів, не будь німий!</span>
+          <span class="ln">Налякай чи вразь, і ось нагорода:</span>
+          <span class="ln">Жменя цукерок і ціла пригода!</span>
+        </p>
+        <p class="st">
+          <span class="ln">Dormween, такого ще не бувало!</span>
+          <span class="ln">Чекай… вдягайся… і не злякайся!</span>
+        </p>
+      </div>
+      <p class="cta-line">Долучайся · Дізнавайся · Голосуй</p>
+      <button class="next" id="next" type="button">
+        Далі
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v15M5 13l7 7 7-7"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <main>
+    <section class="hub" id="menu">
+      <div class="wrap">
+        <h2 class="hub__t">Обирай розділ</h2>
+        <p class="hub__s">Натисни на плитку або просто гортай вниз: усе написано по порядку.</p>
+        <div class="tiles">
+          <a class="tile" href="#info"><svg aria-hidden="true"><use href="#i-pumpkin"/></svg><h3>Загальна інформація</h3><p>Що це, де, коли й навіщо</p></a>
+          <a class="tile" href="#rules"><svg aria-hidden="true"><use href="#i-ghost"/></svg><h3>Правила</h3><p>Щоб було добре всім</p></a>
+          <a class="tile" href="#vote"><svg aria-hidden="true"><use href="#i-bat"/></svg><h3>Голосування</h3><p>Чи береш участь і в якій ролі</p></a>
+          <a class="tile" href="#costumes"><svg aria-hidden="true"><use href="#i-hat"/></svg><h3>Ідеї костюмів</h3><p>Якщо не знаєш, ким бути</p></a>
+        </div>
+      </div>
+    </section>
+
+    <section id="info" data-web>
+      <div class="wrap">
+        <h2 class="h2"><svg aria-hidden="true"><use href="#i-pumpkin"/></svg>Загальна інформація</h2>
+        <p class="lead">Dormween — це гелловін-квест по кімнатах гуртожитку №10. Одягаєшся в костюм, ходиш у гості, стукаєш у двері й або вражаєш господарів, або лякаєш їх. Нагорода: цукерки.</p>
+
+        <div class="cards">
+          <article class="card">
+            <h3>🎃 Що це?</h3>
+            <p>Нічна гра для мешканців гуртожитку №10: костюми, коридори, стукіт у двері й багато цукерок. Відбувається в ніч з 31 жовтня на 1 листопада, з суботи на неділю.</p>
+          </article>
+          <article class="card">
+            <h3>🚪 Як це працює?</h3>
+            <p>У кімнатах зі списку на гостей чекають цукерки. Постукай і заробляй їх: або вражай господарів костюмом, або лякай (жартома, звісно). Список кімнат складемо за результатами голосування.</p>
+          </article>
+          <article class="card">
+            <h3>📍 Де?</h3>
+            <p>У гуртожитку №10, лише в кімнатах з офіційного списку. Перед стартом можна зібратися десь у місті й пройтися з музикою. Час і місце такого збору повідомимо окремо.</p>
+          </article>
+          <article class="card">
+            <h3><svg class="ico" aria-hidden="true"><use href="#i-candy"/></svg> Навіщо?</h3>
+            <p>Щоб познайомитися з сусідами, побачити найкращі костюми, посміятися й розбавити осінню рутину. Плюс цукерки, а це вже аргумент.</p>
+          </article>
+        </div>
+
+        <h3 class="h3">Програма вечора</h3>
+        <ol class="tl">
+          <li><time>До 20:30</time>Необов’язковий збір у місті: прогулянка з музикою. Час і місце повідомимо окремо.</li>
+          <li><time>20:30–21:00</time>Старт. Виходимо в коридори й починаємо обхід кімнат зі списку.</li>
+          <li><time>До 22:30</time>Кімнати, які лише приймають, чекають на гостей у години, вказані в голосуванні.</li>
+          <li><time>22:30–23:30</time>Ті, хто ходив, повертаються до своїх кімнат і чекають гостей у себе (якщо вибрали «ходжу і приймаю»).</li>
+          <li><time>23:30</time>Кінець обходів. За цукерками більше не ходимо. Можна сидіти в гостях і грати в ігри, але тихо.</li>
+          <li class="end"><time>00:00</time>Комендантська година. Усі вже вдома, зокрема й гості не з нашого гуртожитку.</li>
+        </ol>
+
+        <aside class="note">
+          <h3>Участь добровільна</h3>
+          <p>Не хочеш святкувати, і це абсолютно нормально: з релігійних причин, через настрій чи просто тому, що це не твоє. Тих, хто не погодився приймати гостей, не буде в списку кімнат, тож до них ніхто не прийде.</p>
+        </aside>
+      </div>
+    </section>
+
+    <section id="rules" data-web>
+      <div class="wrap">
+        <h2 class="h2"><svg aria-hidden="true"><use href="#i-ghost"/></svg>Правила</h2>
+        <p class="lead">Їх небагато, але вони важливі, щоб було добре всім.</p>
+        <div class="cards">
+          <article class="card card--warn">
+            <h3>Ходимо лише по кімнатах зі списку</h3>
+            <p>Список складемо за результатами голосування. Візити до кімнат, яких у списку немає, можуть призвести до припинення заходу для всіх учасників.</p>
+          </article>
+          <article class="card">
+            <h3>Не хочеш гостей? Тебе не потурбують</h3>
+            <p>Хто проголосував проти, у список не потрапляє. Якщо до тебе все ж прийшли, ти маєш право поскаржитися вахтеру, і візити припиняться.</p>
+          </article>
+          <article class="card">
+            <h3>Обходи закінчуються о 23:30</h3>
+            <p>Після цього за цукерками не ходимо. Можна лишитися в когось у кімнаті й грати в настільні ігри, але нікому не заважати.</p>
+          </article>
+          <article class="card">
+            <h3>О 00:00 комендантська година</h3>
+            <p>Усі мають бути вдома. Ті, хто прийшов не з нашого гуртожитку, мають встигнути піти заздалегідь.</p>
+          </article>
+          <article class="card">
+            <h3>Тиша для сусідів</h3>
+            <p>Не всі святкують. Не заважаємо іншим мешканцям: ні голосом, ні музикою, ні стуком у чужі двері.</p>
+          </article>
+          <article class="card card--ghost">
+            <h3>✍️ Це ще не всі</h3>
+            <p>Організатори додадуть решту правил найближчим часом. Заглядай сюди ще.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="vote" data-web>
+      <div class="wrap">
+        <h2 class="h2"><svg aria-hidden="true"><use href="#i-bat"/></svg>Голосування</h2>
+        <p class="lead">Скажи, чи береш участь і в якій ролі. З відповідей складемо список кімнат, які приймають гостей.</p>
+
+        <ol class="how">
+          <li>У список кімнат потрапляють лише ті, хто сам погодився приймати гостей.</li>
+          <li>Проголосував проти? Тоді до тебе не прийдуть. Якщо все ж прийшли, ти маєш право поскаржитися вахтеру, і візити припиняться.</li>
+          <li>Хочеш приймати гостей? Вкажи кімнату й години, коли чекаєш: з 20:30 або 21:00 і до 22:30.</li>
+        </ol>
+
+        <h3 class="h3" style="margin-top:0">Яка в тебе роль?</h3>
+        <div class="cards">
+          <article class="card">
+            <h3>Ходжу і приймаю</h3>
+            <p>Спочатку обходжу кімнати. З 22:30 повертаюся до себе й чекаю гостей до 23:30. Моя кімната потрапляє до списку.</p>
+          </article>
+          <article class="card">
+            <h3>Тільки приймаю</h3>
+            <p>Не ходжу, а чекаю гостей у себе в обрані години (20:30–22:30). Моя кімната потрапляє до списку.</p>
+          </article>
+          <article class="card">
+            <h3>Тільки ходжу</h3>
+            <p>Обходжу кімнати, але до мене не приходять. Моєї кімнати в списку не буде.</p>
+          </article>
+          <article class="card">
+            <h3>Не беру участі</h3>
+            <p>Усе гаразд, це твій вибір. Мене немає в списку, до мене не приходять.</p>
+          </article>
+        </div>
+
+        <div class="vote-cta">
+          <a class="btn btn--big" href="https://docs.google.com/forms/d/e/1FAIpQLSf5QFVsZeysaP5UPArpJmes6t8zAHMkpp8zXkhrYUtlvbNV_g/viewform" target="_blank" rel="noopener">Проголосувати у формі
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17L17 7M8 7h9v9"/></svg>
+          </a>
+          <p class="hint">Форма відкриється в новій вкладці й займе хвилину: ім’я, кімната (якщо приймаєш гостей) і твоя роль.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="costumes" data-web>
+      <div class="wrap">
+        <h2 class="h2"><svg aria-hidden="true"><use href="#i-hat"/></svg>Ідеї костюмів</h2>
+        <p class="lead">Не знаєш, ким бути? Обери настрій і візьми ідею. Цукерки дають за те, що ти вражаєш або лякаєш: додай репліку, звук чи повільний вхід, і ефект подвоїться.</p>
+
+        <div class="chips" id="chips" role="group" aria-label="Фільтр ідей">
+          <button class="chip" type="button" data-f="all" aria-pressed="true">Усі</button>
+          <button class="chip" type="button" data-f="s" aria-pressed="false">Страшні</button>
+          <button class="chip" type="button" data-f="f" aria-pressed="false">Смішні</button>
+          <button class="chip" type="button" data-f="h" aria-pressed="false">З підручних речей</button>
+          <button class="chip" type="button" data-f="c" aria-pressed="false">Для компанії</button>
+        </div>
+        <div class="pickrow">
+          <button class="btn btn--ghost" type="button" id="dice">🎲 Обери мені костюм</button>
+          <p class="pick" id="pick" role="status"></p>
+        </div>
+        <div class="cos" id="cos"></div>
+
+        <aside class="note" style="margin-top:2rem">
+          <h3>Одна порада</h3>
+          <p>Уникаймо образливих образів: не висміюємо людей, віру, національності й трагедії. Страшно може бути без цього.</p>
+        </aside>
+      </div>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <svg aria-hidden="true"><use href="#i-candy"/></svg>
+    <b>Dormween · гуртожиток №10</b>
+    <p>З 31 жовтня на 1 листопада. Святкуємо так, щоб було добре всім.</p>
+  </footer>
+
+  <button class="snd" id="snd" type="button" data-s="idle" aria-label="Увімкнути музику" aria-pressed="false">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9z"/><g class="w"><path d="M16.5 8.5a5 5 0 0 1 0 7"/><path d="M19 6a8.5 8.5 0 0 1 0 12"/></g><g class="x"><path d="M17 9l5 6M22 9l-5 6"/></g></svg>
+    <span class="t">Увімкнути музику</span>
+  </button>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  var reduce = false;
+  try { reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) {}
+
+  /* ---------- poem timing ---------- */
+  (function () {
+    var lines = document.querySelectorAll('.ln');
+    lines.forEach(function (el, i) {
+      el.style.setProperty('--d', (2.1 + i * 0.42 + Math.floor(i / 4) * 0.5).toFixed(2) + 's');
+    });
+    var n = lines.length - 1;
+    var last = 2.1 + n * 0.42 + Math.floor(n / 4) * 0.5;
+    var cta = document.querySelector('.cta-line');
+    if (cta) cta.style.setProperty('--d', (last + 0.9).toFixed(2) + 's');
+  })();
+
+  /* ---------- spider webs in section corners ---------- */
+  (function () {
+    function webSVG(cls) {
+      var rays = 5, R = [26, 52, 78, 108], i;
+      var s = '<svg class="web ' + cls + '" viewBox="0 0 110 110" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1">';
+      for (i = 0; i < rays; i++) {
+        var a = i * Math.PI / 2 / (rays - 1);
+        s += '<line x1="0" y1="0" x2="' + (110 * Math.cos(a)).toFixed(1) + '" y2="' + (110 * Math.sin(a)).toFixed(1) + '"/>';
+      }
+      R.forEach(function (r) {
+        var d = 'M' + r + ' 0';
+        for (var j = 1; j < rays; j++) {
+          var a0 = (j - 1) * Math.PI / 2 / (rays - 1), a1 = j * Math.PI / 2 / (rays - 1), am = (a0 + a1) / 2, rc = r * 0.86;
+          d += ' Q' + (rc * Math.cos(am)).toFixed(1) + ' ' + (rc * Math.sin(am)).toFixed(1) + ' ' + (r * Math.cos(a1)).toFixed(1) + ' ' + (r * Math.sin(a1)).toFixed(1);
+        }
+        s += '<path d="' + d + '"/>';
+      });
+      return s + '</svg>';
+    }
+    document.querySelectorAll('section[data-web]').forEach(function (sec, i) {
+      sec.insertAdjacentHTML('afterbegin', webSVG(i % 2 ? 'web--r' : ''));
+    });
+  })();
+
+  /* ---------- smooth in-page navigation ---------- */
+  document.addEventListener('click', function (e) {
+    var a = e.target.closest && e.target.closest('a[href^="#"]');
+    if (!a) return;
+    var id = a.getAttribute('href').slice(1);
+    var el = id && document.getElementById(id);
+    if (!el) return;
+    e.preventDefault();
+    el.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
+  });
+  document.getElementById('next').addEventListener('click', function () {
+    document.getElementById('menu').scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
+  });
+
+  /* ---------- nav visibility + active section ---------- */
+  (function () {
+    if (!('IntersectionObserver' in window)) return;
+    var nav = document.getElementById('nav');
+    new IntersectionObserver(function (en) {
+      nav.classList.toggle('on', !en[0].isIntersecting);
+    }, { threshold: 0.12 }).observe(document.getElementById('top'));
+    var links = {};
+    nav.querySelectorAll('a').forEach(function (a) { links[a.getAttribute('href').slice(1)] = a; });
+    var so = new IntersectionObserver(function (en) {
+      en.forEach(function (x) {
+        if (x.isIntersecting) {
+          Object.keys(links).forEach(function (k) { links[k].removeAttribute('aria-current'); });
+          if (links[x.target.id]) links[x.target.id].setAttribute('aria-current', 'true');
+        }
+      });
+    }, { rootMargin: '-40% 0px -55% 0px' });
+    ['info', 'rules', 'vote', 'costumes'].forEach(function (id) { so.observe(document.getElementById(id)); });
+  })();
+
+  /* ---------- bats flying at the screen ---------- */
+  (function () {
+    var cv = document.getElementById('bats');
+    var ctx = cv && cv.getContext && cv.getContext('2d');
+    if (!ctx) return;
+    var W = 0, H = 0, dpr = 1, U = 1, N = 20, bats = [], t = 0, last = 0, raf = 0, visible = true;
+
+    function size() {
+      var r = cv.getBoundingClientRect();
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      W = r.width; H = r.height;
+      cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+      U = Math.min(W, H) / 620;
+      N = W < 520 ? 14 : 22;
+    }
+    function spawn(b, first) {
+      b.th = Math.random() * Math.PI * 2;
+      b.r = 0.15 + Math.random() * 1.25;
+      b.z = first ? 0.2 + Math.random() * 0.8 : 0.85 + Math.random() * 0.2;
+      b.v = 0.5 + Math.random() * 0.45;
+      b.ph = Math.random() * 6.28;
+      b.fs = 9 + Math.random() * 5;
+      b.sw = Math.random() * 6.28;
+      b.alive = true;
+    }
+    function wing(f) {
+      ctx.beginPath();
+      ctx.moveTo(4, -4);
+      ctx.quadraticCurveTo(26, -30 - f * 18, 70, -18 - f * 40);
+      ctx.quadraticCurveTo(62, -4 - f * 30, 58, 10 - f * 24);
+      ctx.quadraticCurveTo(48, -2 - f * 16, 44, 14 - f * 14);
+      ctx.quadraticCurveTo(34, 2 - f * 8, 28, 18 - f * 8);
+      ctx.quadraticCurveTo(18, 6 - f * 3, 8, 16);
+      ctx.closePath(); ctx.fill(); ctx.stroke();
+    }
+    function drawBat(x, y, s, flap, rot, alpha) {
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.translate(x, y); ctx.rotate(rot); ctx.scale(s, s);
+      ctx.fillStyle = '#07030d';
+      ctx.strokeStyle = 'rgba(170,125,255,.65)';
+      ctx.lineWidth = 1.5 / s;
+      ctx.lineJoin = 'round';
+      for (var d = -1; d <= 1; d += 2) { ctx.save(); ctx.scale(d, 1); wing(flap); ctx.restore(); }
+      ctx.beginPath(); ctx.ellipse(0, 4, 7, 13, 0, 0, 6.283); ctx.fill(); ctx.stroke();
+      ctx.beginPath(); ctx.arc(0, -12, 6.5, 0, 6.283); ctx.fill(); ctx.stroke();
+      for (var e = -1; e <= 1; e += 2) {
+        ctx.beginPath(); ctx.moveTo(e * 6, -15); ctx.lineTo(e * 5, -26); ctx.lineTo(e * 1.5, -17.5); ctx.closePath(); ctx.fill(); ctx.stroke();
+      }
+      ctx.fillStyle = '#ff8a2b';
+      ctx.beginPath(); ctx.arc(-2.6, -12.5, 1.3, 0, 6.283); ctx.fill();
+      ctx.beginPath(); ctx.arc(2.6, -12.5, 1.3, 0, 6.283); ctx.fill();
+      ctx.restore();
+    }
+    function place(b) {
+      var k = Math.min(W, H) * 0.22;
+      b.x = W / 2 + Math.cos(b.th) * b.r * k / b.z + Math.sin(t * 0.9 + b.sw) * 14 * U;
+      b.y = H * 0.45 + Math.sin(b.th) * b.r * k / b.z * 0.8 + Math.cos(t * 1.3 + b.sw) * 10 * U;
+      b.s = (0.22 * U) / b.z;
+    }
+    function frame(ts) {
+      raf = requestAnimationFrame(frame);
+      var dt = Math.min(0.05, ((ts - last) / 1000) || 0.016); last = ts; t += dt;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, W, H);
+      var target = t < 7 ? N : Math.max(6, Math.round(N * 0.4));
+      for (var i = 0; i < bats.length; i++) {
+        var b = bats[i];
+        if (b.alive) {
+          b.z -= b.z * b.v * dt;
+          b.ph += b.fs * dt;
+          place(b);
+          if (b.z < 0.07 || b.x < -240 || b.x > W + 240 || b.y < -240 || b.y > H + 240) b.alive = false;
+        }
+        if (!b.alive && i < target) spawn(b, false);
+      }
+      bats.slice().sort(function (a, c) { return c.z - a.z; }).forEach(function (b) {
+        if (!b.alive) return;
+        var alpha = Math.max(0, Math.min(1, (1.02 - b.z) * 10));
+        drawBat(b.x, b.y, b.s, Math.sin(b.ph), Math.sin(t * 1.1 + b.sw) * 0.18, alpha);
+      });
+    }
+    function start() { if (!raf && visible && !reduce) { last = performance.now(); raf = requestAnimationFrame(frame); } }
+    function stop() { if (raf) { cancelAnimationFrame(raf); raf = 0; } }
+    function still() {
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, H);
+      bats.slice(0, 9).forEach(function (b, i) { b.z = 0.25 + i * 0.07; b.ph = i; place(b); drawBat(b.x, b.y, b.s, Math.sin(b.ph), 0, 1); });
+    }
+    function init() {
+      size();
+      bats = [];
+      for (var i = 0; i < 24; i++) { var b = {}; spawn(b, true); bats.push(b); }
+      if (reduce) still(); else start();
+    }
+    init();
+    window.addEventListener('resize', function () { size(); if (reduce) still(); });
+    document.addEventListener('visibilitychange', function () { if (document.hidden) stop(); else start(); });
+    if ('IntersectionObserver' in window) {
+      new IntersectionObserver(function (en) { visible = en[0].isIntersecting; if (visible) start(); else stop(); }).observe(document.getElementById('top'));
+    }
+  })();
+
+  /* ---------- background music: original spooky music-box waltz, synthesized ---------- */
+  var Music = (function () {
+    var AC = window.AudioContext || window.webkitAudioContext;
+    var ctx = null, master = null, send = null, timer = 0, nextBar = 0, barIdx = 0, muted = false, btn = document.getElementById('snd');
+    var BPM = 92, BEAT = 60 / BPM;
+    var SEMI = { C: 0, 'C#': 1, D: 2, 'D#': 3, E: 4, F: 5, 'F#': 6, G: 7, 'G#': 8, A: 9, 'A#': 10, B: 11 };
+    function hz(n) { var m = /^([A-G]#?)(\d)$/.exec(n); return 440 * Math.pow(2, ((SEMI[m[1]] - 9) + 12 * (+m[2] - 4)) / 12); }
+    var BARS = [
+      { c: 'Am', m: [['A4', .5], ['C5', .5], ['E5', 1], ['A5', 1]] },
+      { c: 'Am', m: [['G#5', 1], ['E5', 1], ['C5', 1]] },
+      { c: 'Dm', m: [['D5', .5], ['F5', .5], ['A5', 1], ['F5', 1]] },
+      { c: 'Dm', m: [['E5', 1], ['D5', 1], ['A4', 1]] },
+      { c: 'E',  m: [['G#4', .5], ['B4', .5], ['E5', 1], ['G#5', 1]] },
+      { c: 'E',  m: [['F5', 1], ['D5', 1], ['B4', 1]] },
+      { c: 'Am', m: [['C5', 1], ['E5', 1], ['A5', 1]] },
+      { c: 'Am', m: [['E5', 1], ['G#4', 1], ['A4', 1]] },
+      { c: 'F',  m: [['C5', 1], ['F5', 1], ['A5', 1]] },
+      { c: 'F',  m: [['G5', 1], ['F5', 1], ['C5', 1]] },
+      { c: 'E',  m: [['B4', 1], ['E5', 1], ['G#5', 1]] },
+      { c: 'E',  m: [['A5', 1], ['G#5', 1], ['E5', 1]] },
+      { c: 'Dm', m: [['D5', 1], ['F5', 1], ['A5', 1]] },
+      { c: 'E',  m: [['G#5', .5], ['A5', .5], ['B5', 1], ['G#5', 1]] },
+      { c: 'Am', m: [['A5', 1.5], ['E5', .5], ['C5', 1]] },
+      { c: 'Am', m: [['A4', 3]] }
+    ];
+    var CH = {
+      Am: { r: 'A3', d: ['C4', 'E4'] },
+      Dm: { r: 'D3', d: ['F4', 'A4'] },
+      E:  { r: 'E3', d: ['G#3', 'B3'] },
+      F:  { r: 'F3', d: ['A3', 'C4'] }
+    };
+
+    function env(g, t, peak, dur, att) {
+      g.gain.cancelScheduledValues(t);
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(peak, t + (att || 0.006));
+      g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    }
+    function box(f, t, dur) {
+      var o1 = ctx.createOscillator(), o2 = ctx.createOscillator(), g = ctx.createGain(), g2 = ctx.createGain();
+      o1.type = 'sine'; o2.type = 'sine';
+      o1.frequency.value = f; o2.frequency.value = f * 2.01;
+      g2.gain.value = 0.25;
+      o1.connect(g); o2.connect(g2); g2.connect(g);
+      env(g, t, 0.2, dur);
+      g.connect(master); g.connect(send);
+      o1.start(t); o2.start(t); o1.stop(t + dur + 0.05); o2.stop(t + dur + 0.05);
+    }
+    function pluck(f, t, dur, peak) {
+      var o = ctx.createOscillator(), g = ctx.createGain();
+      o.type = 'triangle'; o.frequency.value = f;
+      env(g, t, peak, dur, 0.012);
+      o.connect(g); g.connect(master);
+      o.start(t); o.stop(t + dur + 0.05);
+    }
+    function schedBar(t0, i) {
+      var b = BARS[i % BARS.length], ch = CH[b.c], off = 0;
+      pluck(hz(ch.r), t0, BEAT * 1.8, 0.16);
+      ch.d.forEach(function (n) {
+        pluck(hz(n), t0 + BEAT, BEAT * 0.9, 0.045);
+        pluck(hz(n), t0 + 2 * BEAT, BEAT * 0.9, 0.04);
+      });
+      b.m.forEach(function (n) { box(hz(n[0]), t0 + off * BEAT, Math.max(0.9, n[1] * BEAT * 1.8)); off += n[1]; });
+    }
+    function tick() {
+      if (!ctx || ctx.state !== 'running') return;
+      if (nextBar < ctx.currentTime) nextBar = ctx.currentTime + 0.15;
+      while (nextBar < ctx.currentTime + 0.8) { schedBar(nextBar, barIdx++); nextBar += 3 * BEAT; }
+    }
+    function build() {
+      ctx = new AC();
+      var comp = ctx.createDynamicsCompressor();
+      master = ctx.createGain(); master.gain.value = 0;
+      master.connect(comp); comp.connect(ctx.destination);
+      master.gain.setValueAtTime(0, ctx.currentTime);
+      master.gain.linearRampToValueAtTime(0.75, ctx.currentTime + 2.5);
+      /* echo */
+      send = ctx.createGain(); send.gain.value = 0.35;
+      var dl = ctx.createDelay(1); dl.delayTime.value = 0.34;
+      var fb = ctx.createGain(); fb.gain.value = 0.4;
+      var lp2 = ctx.createBiquadFilter(); lp2.type = 'lowpass'; lp2.frequency.value = 2400;
+      send.connect(dl); dl.connect(lp2); lp2.connect(fb); fb.connect(dl); lp2.connect(master);
+      /* drone */
+      var lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 380; lp.Q.value = 0.7;
+      var pg = ctx.createGain(); pg.gain.value = 0.05; lp.connect(pg); pg.connect(master);
+      [110, 164.81, 220.5].forEach(function (f, i) {
+        var o = ctx.createOscillator(); o.type = 'sawtooth'; o.frequency.value = f; o.detune.value = (i - 1) * 7; o.connect(lp); o.start();
+      });
+      var lfo = ctx.createOscillator(), lg = ctx.createGain(); lfo.frequency.value = 0.09; lg.gain.value = 140; lfo.connect(lg); lg.connect(lp.frequency); lfo.start();
+      /* wind */
+      var len = ctx.sampleRate * 2, buf = ctx.createBuffer(1, len, ctx.sampleRate), d = buf.getChannelData(0);
+      for (var i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+      var src = ctx.createBufferSource(); src.buffer = buf; src.loop = true;
+      var bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 520; bp.Q.value = 0.9;
+      var wg = ctx.createGain(); wg.gain.value = 0.018;
+      var l2 = ctx.createOscillator(), lg2 = ctx.createGain(); l2.frequency.value = 0.07; lg2.gain.value = 0.014; l2.connect(lg2); lg2.connect(wg.gain);
+      src.connect(bp); bp.connect(wg); wg.connect(master); src.start(); l2.start();
+      ctx.onstatechange = ui;
+      timer = setInterval(tick, 120);
+    }
+    function state() { if (muted) return 'off'; if (ctx && ctx.state === 'running') return 'on'; return 'idle'; }
+    function ui() {
+      var s = state();
+      btn.setAttribute('data-s', s);
+      btn.setAttribute('aria-pressed', s === 'on' ? 'true' : 'false');
+      btn.setAttribute('aria-label', s === 'on' ? 'Вимкнути музику' : 'Увімкнути музику');
+    }
+    function enable() {
+      if (!AC) return;
+      try {
+        if (!ctx) build();
+        try { var a = new Audio('data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAABErAAABAAgAZGF0YQAAAAA='); a.play().catch(function () {}); } catch (x) {}
+        var p = ctx.resume();
+        if (p && p.then) p.then(ui, ui);
+      } catch (e) {}
+      ui();
+    }
+    function disable() {
+      muted = true;
+      try { if (ctx) { var p = ctx.suspend(); if (p && p.then) p.then(ui, ui); } } catch (e) {}
+      ui();
+    }
+    btn.addEventListener('click', function () {
+      if (state() === 'on') disable(); else { muted = false; enable(); }
+    });
+    /* start on the first real tap or key press anywhere (browsers need a gesture) */
+    function gesture(e) {
+      if (muted) return;
+      if (e.target.closest && e.target.closest('.snd')) return;
+      if (ctx && ctx.state === 'running') { detach(); return; }
+      enable();
+    }
+    function detach() { ['click', 'touchend', 'keydown'].forEach(function (ev) { document.removeEventListener(ev, gesture, true); }); }
+    ['click', 'touchend', 'keydown'].forEach(function (ev) { document.addEventListener(ev, gesture, true); });
+    document.addEventListener('visibilitychange', function () {
+      if (!ctx) return;
+      if (document.hidden) ctx.suspend(); else if (!muted) ctx.resume();
+    });
+
+    /* ---------- sound effects for buttons ---------- */
+    function live() { return ctx && ctx.state === 'running' && !muted; }
+    function knock(t) {
+      var o = ctx.createOscillator(), g = ctx.createGain();
+      o.type = 'sine'; o.frequency.setValueAtTime(170, t); o.frequency.exponentialRampToValueAtTime(55, t + 0.1);
+      env(g, t, 0.55, 0.16, 0.004); o.connect(g); g.connect(master); o.start(t); o.stop(t + 0.2);
+    }
+    function whoosh() {
+      var t = ctx.currentTime, len = ctx.sampleRate * 0.7, buf = ctx.createBuffer(1, len, ctx.sampleRate), d = buf.getChannelData(0), i;
+      for (i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+      var s = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+      s.buffer = buf; f.type = 'bandpass'; f.Q.value = 2;
+      f.frequency.setValueAtTime(300, t); f.frequency.exponentialRampToValueAtTime(1800, t + 0.6);
+      env(g, t, 0.25, 0.65, 0.2); s.connect(f); f.connect(g); g.connect(master); s.start(t);
+    }
+    function sfx(kind) {
+      if (!live()) return;
+      var t = ctx.currentTime;
+      if (kind === 'knock') { knock(t); knock(t + 0.16); knock(t + 0.34); }
+      else if (kind === 'whoosh') whoosh();
+      else if (kind === 'tick') pluck(880, t, 0.12, 0.12);
+      else if (kind === 'dice') { box(1318, t, 1.2); box(1760, t + 0.12, 1.2); box(2093, t + 0.24, 1.4); }
+    }
+    document.addEventListener('click', function (e) {
+      var el = e.target.closest && e.target.closest('.tile,.btn--big,.nav a,#next,.chip,#dice');
+      if (!el) return;
+      setTimeout(function () {
+        sfx(el.id === 'next' ? 'whoosh' : el.id === 'dice' ? 'dice' : el.classList.contains('chip') || el.closest('.nav') ? 'tick' : 'knock');
+      }, 30);
+    });
+    ui();
+    return { enable: enable, disable: disable };
+  })();
+
+  /* ---------- costume ideas ---------- */
+  (function () {
+    var COS = [
+      { e: '🧛', n: 'Вампір', t: 'Чорний плащ або піджак, бліда основа на обличчя й червона помада як слід від зубів.', g: 's' },
+      { e: '🧙', n: 'Відьма', t: 'Чорне вбрання, капелюх із картону, мітла з віника. Зілля в пляшці з-під води.', g: 'sh' },
+      { e: '👻', n: 'Привид', t: 'Біле простирадло з дірками для очей. Працює завжди, особливо в темному коридорі.', g: 'sh' },
+      { e: '🧟', n: 'Зомбі', t: 'Порваний одяг, брудні руки, повільна хода й стогін «сесіііія».', g: 'sf' },
+      { e: '💀', n: 'Скелет', t: 'Чорний одяг і кістки, намальовані білою фарбою або скотчем.', g: 'sh' },
+      { e: '🧻', n: 'Мумія', t: 'Туалетний папір або бинти. Головне: не заплутатися на сходах.', g: 'fh' },
+      { e: '🐱', n: 'Чорний кіт', t: 'Чорний одяг, вушка на обручі й намальовані вуса. Нявкай за цукерки.', g: 'fh' },
+      { e: '🎃', n: 'Гарбуз', t: 'Помаранчевий одяг, подушка під светром і зелена шапка-хвостик.', g: 'fh' },
+      { e: '🦇', n: 'Кажан', t: 'Крила з картону або чорної парасолі, вушка, писк замість привітання.', g: 'sh' },
+      { e: '🍲', n: 'Борщ', t: 'Червоний светр, ватна сметана, паперова зелень. Дуже по-нашому.', g: 'f' },
+      { e: '📎', n: 'Дедлайн', t: 'Одяг у стікерах «терміново», будильник на шиї й тремтячий голос.', g: 'fh' },
+      { e: '📶', n: 'Привид без Wi-Fi', t: 'Біле простирадло й табличка «шукаю сигнал». Блукає коридором і зітхає.', g: 'fh' },
+      { e: '🕷️', n: 'Павук', t: 'Чорний одяг і додаткові «лапки» з панчіх. Найкраще працює з компанією павучків.', g: 'sc' },
+      { e: '🍬', n: 'Цукерка', t: 'Фольга або яскравий пакет, обгортка з боків. Складно не віддати цукерку цукерці.', g: 'fh' },
+      { e: '🧙', n: 'Шабаш відьом', t: 'Компанія в чорному з капелюхами, у кожної своє «зілля».', g: 'sc' },
+      { e: '🧛', n: 'Вампір і жертва', t: 'Один кусає, другий драматично падає. Бери змивний грим.', g: 'fc' }
+    ];
+    var TAG = { s: 'Страшно', f: 'Смішно', h: 'З підручних речей', c: 'Для компанії' };
+    var grid = document.getElementById('cos'), pick = document.getElementById('pick');
+    var cur = 'all';
+
+    COS.forEach(function (c) {
+      var card = document.createElement('article');
+      card.className = 'card'; card.dataset.g = c.g;
+      var em = document.createElement('div'); em.className = 'em'; em.textContent = c.e; em.setAttribute('aria-hidden', 'true');
+      var h = document.createElement('h3'); h.textContent = c.n;
+      var p = document.createElement('p'); p.textContent = c.t;
+      var tg = document.createElement('div'); tg.className = 'tags';
+      c.g.split('').forEach(function (k) { var s = document.createElement('span'); s.textContent = TAG[k]; tg.appendChild(s); });
+      var hd = document.createElement('div'); hd.className = 'hd'; hd.appendChild(em); hd.appendChild(h);
+      card.appendChild(hd); card.appendChild(p); card.appendChild(tg);
+      grid.appendChild(card);
+    });
+
+    function apply() {
+      grid.querySelectorAll('.card').forEach(function (c) {
+        c.hidden = !(cur === 'all' || c.dataset.g.indexOf(cur) > -1);
+        c.classList.remove('hit');
+      });
+      pick.textContent = '';
+    }
+    document.getElementById('chips').addEventListener('click', function (e) {
+      var b = e.target.closest('.chip'); if (!b) return;
+      cur = b.dataset.f;
+      document.querySelectorAll('.chip').forEach(function (x) { x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); });
+      apply();
+    });
+    document.getElementById('dice').addEventListener('click', function () {
+      var vis = Array.prototype.filter.call(grid.querySelectorAll('.card'), function (c) { return !c.hidden; });
+      if (!vis.length) return;
+      grid.querySelectorAll('.card').forEach(function (c) { c.classList.remove('hit'); });
+      var c = vis[Math.floor(Math.random() * vis.length)];
+      c.classList.add('hit');
+      pick.textContent = 'Твій костюм: ' + c.querySelector('h3').textContent;
+      c.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'center' });
+    });
+  })();
+})();
+</script>
+
+</body></html>
